@@ -14,7 +14,7 @@ That made me examine the problem and see if it could be solved so that it helped
 
 ### Understanding the service
 The service is split up into regional scale units, each of which is a collection of micro-services running on a common [service fabric based compute cluster](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-azure-clusters-overview).
-- The micro-services use independent storages and code repositories and talk to each other using HTTPS. 
+- The micro-services use independent storages and code repositories and talk to each other using HTTPS. Quite a few microservices ran with [in-memory stateful data](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-reliable-services-reliable-collections), which meant that data in the service was the primary source of truth.
 - They share common libraries around logging/authentication/service lifecycle/storage etc.
 - They share the same CI/CD frameworks, and monitoring dashboards, but all other decisions are taken independently.
 
@@ -22,7 +22,7 @@ The service is split up into regional scale units, each of which is a collection
 - Each micro-service had its own process around bootstrapping itself into a new region, especially around populating key vaults with certificates and secrets.
 - They had taken different approaches to resiliency (using geo replication, availability zones etc.).
 - There wasn't an automated way to locate the build numbers, and map them to the repositories and release branches for each micro-service that needed to be redeployed in the case of a DR.
-- When doing just compute DRs, different services seemed to take varying amounts of time to start up (up to 5+ hours) and load data.
+- When doing just compute DRs, different services seemed to take varying amounts of time to start up (up to 5+ hours), load data and run data consistency checks.
 - Finally, our services (including monitoring infrastructure) didn't understand the concept of DR or the need for a passive mode. So, we often ended up with more writer processes than expected, or the monitoring infrastructure would flag suspicious behavior (new certificate/security groups, capacity fluctuations etc.) which fired alerts and slowed down the DR.
 
 ### Concerns from leadership
